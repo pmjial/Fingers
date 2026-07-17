@@ -1,21 +1,32 @@
 {
-	"M16 5.56 Rifles": 0.986,
-	"hockey sticks": 0.81,
-	"lava lamps": 0.3048,
-	
-	"thumbs": 0.057,
-	"index fingers": 0.076,
-	"middle fingers": 0.078,
-	"ring fingers": 0.071,
-	"pinky fingers": 0.056,
-	
-	"male frog fingers": 0.076,
-	"female frog fingers": 0.068,
-	
-	"elephant trunks": 2,
-	"elephant feet": 0.45,
-	"elephant legs": 1.5,
-	
-	"rat paws": 0.015,
-	"black rat paws": 0.02
+	"units": {
+		"Meters":      1,
+		"Centimeters": 0.01,
+		"Kilometers":  1000,
+		"Inches":      0.0254,
+		"Feet":        0.3048,
+		"Yards":       0.9144,
+		"Miles":       1610
+	},
+	"fingers": {
+		"M16 5.56mm Rifles": 0.986,
+		"hockey sticks": 0.81,
+		"lava lamps": 0.3048,
+		
+		"thumbs": 0.057,
+		"index fingers": 0.076,
+		"middle fingers": 0.078,
+		"ring fingers": 0.071,
+		"pinky fingers": 0.056,
+		
+		"male frog fingers": 0.076,
+		"female frog fingers": 0.068,
+
+		"elephant trunks": 2,
+		"elephant feet": 0.45,
+		"elephant legs": 1.5,
+		
+		"rat paws": 0.015,
+		"black rat paws": 0.02
+	}
 }

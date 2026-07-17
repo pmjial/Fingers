@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func Get() (db Database) {
+func get() (db map[string]Database) {
 	f, err := os.ReadFile(dbFile)
 	if err != nil {
 		return nil
@@ -27,6 +27,14 @@ func Get() (db Database) {
 		return nil
 	}
 	return db
+}
+
+func Fingers() Database {
+	return get()["fingers"]
+}
+
+func Units() Database {
+	return get()["units"]
 }
 
 func Keys[K comparable, V any](db map[K]V) []K {

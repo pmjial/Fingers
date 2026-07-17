@@ -1,7 +1,6 @@
 package main
 
 import (
-	"Fingers/convert"
 	"Fingers/db"
 	"fmt"
 	"fyne.io/fyne/v2"
@@ -12,18 +11,11 @@ import (
 )
 
 var (
-	units = map[string]convert.Unit{
-		"Meters":      convert.Meter,
-		"Centimeters": convert.Cm,
-		"Kilometers":  convert.Km,
-		"Inches":      convert.Inch,
-		"Feet":        convert.Foot,
-		"Yards":       convert.Yard,
-		"Miles":       convert.Mile,
-	}
+	units    db.Database = db.Units()
+	database db.Database = db.Fingers()
 
-	first = "Meters"
-	unit  = units[first]
+	first string    = units.RandKey()
+	unit  db.Length = units[first]
 )
 
 func main() {
@@ -31,7 +23,6 @@ func main() {
 	w := a.NewWindow("Fingers")
 	w.Resize(fyne.NewSize(600, 400))
 
-	database := db.Get()
 	list := widget.NewList(
 		func() int {
 			return 0
@@ -56,12 +47,12 @@ func main() {
 		OnChanged: func(s string) {
 			length, _ := strconv.ParseFloat(s, 64)
 			list.Length = func() int {
-				return 3
+				return len(database) / 5
 			}
 			list.UpdateItem = func(id widget.ListItemID, item fyne.CanvasObject) {
 				var key string = database.RandKey()
 				// This converts length of [unit]s to the amount of fingers it is equivalent to
-				var metric db.Length = convert.InMeter(database[key]) * length * unit
+				var metric db.Length = length * unit / database[key]
 
 				item.(*widget.Label).SetText(
 					fmt.Sprintf("%.4f\t%s", metric, key),
