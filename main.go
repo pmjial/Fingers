@@ -17,7 +17,19 @@ var (
 
 	first string    = units.RandKey()
 	unit  db.Length = units[first]
+
+	randKeys = db.Keys(database)[:len(database)/5]
 )
+
+func randomizeKeys() {
+	for i := range randKeys {
+		key := database.RandKey()
+		for slices.Contains(randKeys, key) {
+			key = database.RandKey()
+		}
+		randKeys[i] = key
+	}
+}
 
 func main() {
 	a := app.New()
@@ -48,14 +60,7 @@ func main() {
 		OnChanged: func(s string) {
 			length, _ := strconv.ParseFloat(s, 64)
 			amount := len(database) / 5
-			randKeys := make([]string, amount)
-			for i := range randKeys {
-				randKey := database.RandKey()
-				for slices.Contains(randKeys, randKey) {
-					randKey = database.RandKey()
-				}
-				randKeys[i] = randKey
-			}
+			randomizeKeys()
 
 			list.Length = func() int {
 				return amount
@@ -77,7 +82,10 @@ func main() {
 			widget.NewFormItem("Convert: ", input),
 			widget.NewFormItem("Select units: ", options),
 		),
-		nil,
+		widget.NewButton("Reload", func() {
+			randomizeKeys()
+			list.Refresh()
+		}),
 		nil,
 		nil,
 		list,

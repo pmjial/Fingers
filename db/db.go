@@ -12,10 +12,6 @@ var f []byte
 type (
 	Length   = float64
 	Database map[string]Length
-	DataPair struct {
-		Key   string
-		Value Length
-	}
 )
 
 func get() (db map[string]Database) {
