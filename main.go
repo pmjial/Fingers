@@ -1,14 +1,17 @@
 package main
 
 import (
-	"fmt"
+	"slices"
+	"strconv"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Depermitto/Fingers/db"
-	"slices"
-	"strconv"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
+	"golang.org/x/text/number"
 )
 
 var (
@@ -18,7 +21,7 @@ var (
 	first string    = units.RandKey()
 	unit  db.Length = units[first]
 
-	randKeys = db.Keys(database)[:len(database)/5]
+	randKeys = db.Keys(database)[:len(database)/2]
 )
 
 func randomizeKeys() {
@@ -55,23 +58,26 @@ func main() {
 		},
 	}
 
+	p := message.NewPrinter(language.English)
 	input := &widget.Entry{
 		PlaceHolder: "Input number",
 		OnChanged: func(s string) {
 			length, _ := strconv.ParseFloat(s, 64)
-			amount := len(database) / 5
 			randomizeKeys()
 
 			list.Length = func() int {
-				return amount
+				return len(randKeys)
 			}
 			list.UpdateItem = func(id widget.ListItemID, item fyne.CanvasObject) {
 				// This converts length of [unit]s to the amount of fingers it is equivalent to
 				var metric db.Length = length * unit / database[randKeys[id]]
 
-				item.(*widget.Label).SetText(
-					fmt.Sprintf("%.4f\t%s", metric, randKeys[id]),
-				)
+				fmtted := p.Sprint(number.Decimal(metric))
+				if len(fmtted) > 6 {
+					fmtted = p.Sprint(number.Scientific(metric, number.Scale(2)))
+				}
+
+				item.(*widget.Label).SetText(p.Sprintf("%-15v%v", fmtted, randKeys[id]))
 			}
 			w.Content().Refresh()
 		},
