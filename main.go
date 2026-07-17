@@ -78,14 +78,21 @@ func main() {
 	}
 
 	content := container.NewBorder(
-		widget.NewForm(
-			widget.NewFormItem("Convert: ", input),
-			widget.NewFormItem("Select units: ", options),
+		container.NewVBox(
+			widget.NewForm(
+				widget.NewFormItem("Convert: ", input),
+			),
+			container.NewHBox(
+				widget.NewForm(
+					widget.NewFormItem("Select units: ", options),
+				),
+				widget.NewButton("Reload", func() {
+					randomizeKeys()
+					list.Refresh()
+				}),
+			),
 		),
-		widget.NewButton("Reload", func() {
-			randomizeKeys()
-			list.Refresh()
-		}),
+		nil,
 		nil,
 		nil,
 		list,
