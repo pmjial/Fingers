@@ -1,12 +1,13 @@
 package db
 
 import (
+	_ "embed"
 	"encoding/json"
 	"math/rand"
-	"os"
 )
 
-const dbFile = "db.json"
+//go:embed "db.json"
+var f []byte
 
 type (
 	Length   = float64
@@ -18,11 +19,6 @@ type (
 )
 
 func get() (db map[string]Database) {
-	f, err := os.ReadFile(dbFile)
-	if err != nil {
-		return nil
-	}
-
 	if err := json.Unmarshal(f, &db); err != nil {
 		return nil
 	}
@@ -48,15 +44,4 @@ func Keys[K comparable, V any](db map[K]V) []K {
 func (db Database) RandKey() string {
 	randIndex := rand.Intn(len(db))
 	return Keys(db)[randIndex]
-}
-
-func (db Database) Commit() error {
-	f, _ := json.MarshalIndent(db, "", "\t")
-	return os.WriteFile(dbFile, f, 0755)
-}
-
-func (db Database) Append(data ...DataPair) {
-	for _, datum := range data {
-		db[datum.Key] = datum.Value
-	}
 }
