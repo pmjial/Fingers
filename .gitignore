@@ -1,0 +1,8 @@
+.DS_Store
+.idea/
+.vscode/
+*.log
+tmp/
+__length/
+Fingers.exe
+Fingers
