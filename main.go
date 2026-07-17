@@ -1,107 +1,115 @@
 package main
 
 import (
-	"slices"
+	"log"
+	"math/rand/v2"
 	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/Depermitto/Fingers/db"
+	"go.pmjlab.com/fingers/internal/data"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"golang.org/x/text/number"
 )
 
+const DecimalLimit = 16
+
 var (
-	units    db.Database = db.Units()
-	database db.Database = db.Fingers()
-
-	first string    = units.RandKey()
-	unit  db.Length = units[first]
-
-	randKeys = db.Keys(database)[:len(database)/2]
+	dataset  = mustLoadSeed()
+	first    = dataset.Units.Names()[rand.IntN(len(dataset.Units))]
+	unit     = dataset.Units[first]
+	randKeys []string
 )
 
-func randomizeKeys() {
-	for i := range randKeys {
-		key := database.RandKey()
-		for slices.Contains(randKeys, key) {
-			key = database.RandKey()
-		}
-		randKeys[i] = key
+func mustLoadSeed() data.Dataset {
+	dataset, err := data.LoadSeed()
+	if err != nil {
+		log.Fatalf("load application data: %v", err)
 	}
+	return dataset
+}
+
+func randomizeKeys() {
+	randKeys = dataset.Measurements.Names()
+	rand.Shuffle(len(randKeys), func(i, j int) {
+		randKeys[i], randKeys[j] = randKeys[j], randKeys[i]
+	})
+	randKeys = randKeys[:len(randKeys)/2]
 }
 
 func main() {
-	a := app.New()
+	a := app.NewWithID("com.pmjlab.fingers")
 	w := a.NewWindow("Fingers")
 	w.Resize(fyne.NewSize(600, 400))
 
-	list := widget.NewList(
-		func() int {
-			return 0
-		},
-		func() fyne.CanvasObject {
-			return new(widget.Label)
-		},
-		func(id widget.ListItemID, item fyne.CanvasObject) {},
-	)
-
-	options := &widget.Select{
-		Options:  db.Keys(units),
-		Selected: first,
-		OnChanged: func(key string) {
-			unit = units[key]
-			w.Content().Refresh()
-		},
+	valueColumn := container.NewVBox()
+	nameColumn := container.NewVBox()
+	clearResults := func() {
+		valueColumn.RemoveAll()
+		nameColumn.RemoveAll()
 	}
 
 	p := message.NewPrinter(language.English)
-	input := &widget.Entry{
-		PlaceHolder: "Input number",
-		OnChanged: func(s string) {
-			length, _ := strconv.ParseFloat(s, 64)
-			randomizeKeys()
-
-			list.Length = func() int {
-				return len(randKeys)
+	var length float64
+	refreshResults := func() {
+		clearResults()
+		for _, key := range randKeys {
+			metric := length * unit / dataset.Measurements[key]
+			formatted := p.Sprint(number.Decimal(metric))
+			if len(formatted) > DecimalLimit {
+				formatted = p.Sprint(number.Scientific(metric, number.Scale(2)))
 			}
-			list.UpdateItem = func(id widget.ListItemID, item fyne.CanvasObject) {
-				// This converts length of [unit]s to the amount of fingers it is equivalent to
-				var metric db.Length = length * unit / database[randKeys[id]]
 
-				fmtted := p.Sprint(number.Decimal(metric))
-				if len(fmtted) > 6 {
-					fmtted = p.Sprint(number.Scientific(metric, number.Scale(2)))
-				}
+			value := widget.NewLabel(formatted)
+			value.Alignment = fyne.TextAlignTrailing
+			value.Truncation = fyne.TextTruncateEllipsis
+			valueColumn.Add(value)
 
-				item.(*widget.Label).SetText(p.Sprintf("%-15v%v", fmtted, randKeys[id]))
-			}
-			w.Content().Refresh()
+			description := widget.NewLabel(key)
+			description.Truncation = fyne.TextTruncateEllipsis
+			nameColumn.Add(description)
+		}
+	}
+
+	options := &widget.Select{
+		Options:  dataset.Units.Names(),
+		Selected: first,
+		OnChanged: func(key string) {
+			unit = dataset.Units[key]
+			refreshResults()
 		},
 	}
 
+	input := &widget.Entry{
+		PlaceHolder: "Input number",
+		OnChanged: func(value string) {
+			length, _ = strconv.ParseFloat(value, 64)
+			randomizeKeys()
+			refreshResults()
+		},
+	}
+
+	results := container.NewHSplit(valueColumn, nameColumn)
+	results.SetOffset(0.3)
+
 	content := container.NewBorder(
 		container.NewVBox(
-			widget.NewForm(
-				widget.NewFormItem("Convert: ", input),
-			),
+			widget.NewForm(widget.NewFormItem("Convert:", input)),
 			container.NewHBox(
-				widget.NewForm(
-					widget.NewFormItem("Select units: ", options),
-				),
+				widget.NewForm(widget.NewFormItem("Select units:", options)),
 				widget.NewButton("Reload", func() {
 					randomizeKeys()
-					list.Refresh()
+					refreshResults()
 				}),
 			),
 		),
 		nil,
 		nil,
 		nil,
-		list,
+		container.NewVScroll(results),
 	)
 
 	w.SetContent(content)
