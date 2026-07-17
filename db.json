@@ -27,6 +27,10 @@
 		"elephant legs": 1.5,
 		
 		"rat paws": 0.015,
-		"black rat paws": 0.02
+		"black rat paws": 0.02,
+		
+		"banana": 0.15,
+		"long banana": 0.20,
+		"rasthali banana plant": 4
 	}
 }
