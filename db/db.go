@@ -1,34 +1,54 @@
 package db
 
-import "math/rand"
+import (
+	"encoding/json"
+	"math/rand"
+	"os"
+)
 
-type Length float64
+const dbFile = "db.json"
 
-var db = map[string]Length{
-	"finger":         .09,
-	"hockey stick":   .81,
-	"tree":           20,
-	"M16 5.56 Rifle": .986,
-	"lava lamp":      0.3048,
+type (
+	Length   = float64
+	Database map[string]Length
+	DataPair struct {
+		Key   string
+		Value Length
+	}
+)
+
+func Get() (db Database) {
+	f, err := os.ReadFile(dbFile)
+	if err != nil {
+		return nil
+	}
+
+	if err := json.Unmarshal(f, &db); err != nil {
+		return nil
+	}
+	return db
 }
 
-func Get(key string) Length {
-	return db[key]
-}
-
-func Keys() []string {
-	keys := make([]string, 0, len(db))
+func Keys[K comparable, V any](db map[K]V) []K {
+	keys := make([]K, 0, len(db))
 	for k := range db {
 		keys = append(keys, k)
 	}
 	return keys
 }
 
-func RandKey() string {
+func (db Database) RandKey() string {
 	randIndex := rand.Intn(len(db))
-	return Keys()[randIndex]
+	return Keys(db)[randIndex]
 }
 
-func RandValue() Length {
-	return Get(RandKey())
+func (db Database) Commit() error {
+	f, _ := json.MarshalIndent(db, "", "\t")
+	return os.WriteFile(dbFile, f, 0755)
+}
+
+func (db Database) Append(data ...DataPair) {
+	for _, datum := range data {
+		db[datum.Key] = datum.Value
+	}
 }
