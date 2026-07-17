@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"slices"
 	"strconv"
 )
 
@@ -46,16 +47,25 @@ func main() {
 		PlaceHolder: "Input number",
 		OnChanged: func(s string) {
 			length, _ := strconv.ParseFloat(s, 64)
+			amount := len(database) / 5
+			randKeys := make([]string, amount)
+			for i := range randKeys {
+				randKey := database.RandKey()
+				for slices.Contains(randKeys, randKey) {
+					randKey = database.RandKey()
+				}
+				randKeys[i] = randKey
+			}
+
 			list.Length = func() int {
-				return len(database) / 5
+				return amount
 			}
 			list.UpdateItem = func(id widget.ListItemID, item fyne.CanvasObject) {
-				var key string = database.RandKey()
 				// This converts length of [unit]s to the amount of fingers it is equivalent to
-				var metric db.Length = length * unit / database[key]
+				var metric db.Length = length * unit / database[randKeys[id]]
 
 				item.(*widget.Label).SetText(
-					fmt.Sprintf("%.4f\t%s", metric, key),
+					fmt.Sprintf("%.4f\t%s", metric, randKeys[id]),
 				)
 			}
 			w.Content().Refresh()
